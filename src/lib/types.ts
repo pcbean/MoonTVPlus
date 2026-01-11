@@ -139,6 +139,7 @@ export interface SearchResult {
   subtitles?: Array<Array<{ label: string; url: string }>>; // 字幕列表（按集数索引）
   tmdb_id?: number; // TMDB ID
   rating?: number; // 评分
+  initialEpisodeIndex?: number; // 初始集数索引（用于小雅源从文件点击进入时指定集数）
 }
 
 // 豆瓣数据结构

@@ -2677,18 +2677,52 @@ function PlayPageClient() {
         const key = generateStorageKey(detailData.source, detailData.id);
         const record = allRecords[key];
 
+        // 确定初始集数索引
+        let initialIndex = 0;
+        let shouldResumeTime = false;
+
         if (record) {
-          const targetIndex = record.index - 1;
-          const targetTime = record.play_time;
+          // 有播放记录
+          const recordIndex = record.index - 1;
+          const recordTime = record.play_time;
 
-          // 更新当前选集索引
-          if (targetIndex < detailData.episodes.length && targetIndex >= 0) {
-            setCurrentEpisodeIndex(targetIndex);
-            currentEpisodeIndexRef.current = targetIndex;
+          // 如果有initialEpisodeIndex（用户从文件点击进入）
+          if (detailData.initialEpisodeIndex !== undefined) {
+            // 如果播放记录的集数和点击的文件集数一致，则使用播放记录的时间
+            if (recordIndex === detailData.initialEpisodeIndex) {
+              initialIndex = recordIndex;
+              shouldResumeTime = true;
+              resumeTimeRef.current = recordTime;
+              console.log('[Play] 播放记录集数与点击文件一致，恢复播放进度:', recordTime);
+            } else {
+              // 否则使用点击的文件集数，从头开始播放
+              initialIndex = detailData.initialEpisodeIndex;
+              console.log('[Play] 使用点击的文件集数:', initialIndex);
+            }
+          } else {
+            // 没有initialEpisodeIndex，使用播放记录
+            initialIndex = recordIndex;
+            shouldResumeTime = true;
+            resumeTimeRef.current = recordTime;
+            console.log('[Play] 使用播放记录集数:', initialIndex);
           }
+        } else {
+          // 没有播放记录
+          if (detailData.initialEpisodeIndex !== undefined) {
+            // 使用点击的文件集数
+            initialIndex = detailData.initialEpisodeIndex;
+            console.log('[Play] 没有播放记录，使用点击的文件集数:', initialIndex);
+          } else {
+            // 默认从第0集开始
+            initialIndex = 0;
+            console.log('[Play] 没有播放记录，从第0集开始');
+          }
+        }
 
-          // 保存待恢复的播放进度，待播放器就绪后跳转
-          resumeTimeRef.current = targetTime;
+        // 更新当前选集索引
+        if (initialIndex < detailData.episodes.length && initialIndex >= 0) {
+          setCurrentEpisodeIndex(initialIndex);
+          currentEpisodeIndexRef.current = initialIndex;
         }
       } catch (err) {
         console.error('读取播放记录失败:', err);

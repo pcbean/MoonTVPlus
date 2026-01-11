@@ -175,6 +175,11 @@ export async function GET(request: NextRequest) {
       // 获取集数列表
       const episodes = await getXiaoyaEpisodes(client, decodedPath);
 
+      // 找到用户点击的文件在集数列表中的索引
+      const clickedFileIndex = episodes.findIndex(ep => ep.path === decodedPath);
+      console.log('[xiaoya] 用户点击的文件:', decodedPath);
+      console.log('[xiaoya] 文件在集数列表中的索引:', clickedFileIndex);
+
       const result = {
         source: 'xiaoya',
         source_name: '小雅',
@@ -188,6 +193,8 @@ export async function GET(request: NextRequest) {
         episodes_titles: episodes.map(ep => ep.title),
         subtitles: [],
         proxyMode: false,
+        // 返回用户点击的文件索引（如果找到的话）
+        initialEpisodeIndex: clickedFileIndex >= 0 ? clickedFileIndex : undefined,
       };
 
       return NextResponse.json(result);
