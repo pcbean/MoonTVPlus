@@ -21,7 +21,7 @@ interface DownloadContextType {
   ) => Promise<void>;
   startTask: (taskId: string) => void;
   pauseTask: (taskId: string) => void;
-  cancelTask: (taskId: string) => void;
+  cancelTask: (taskId: string) => Promise<void>;
   retryFailedSegments: (taskId: string) => void;
   getProgress: (taskId: string) => number;
   downloadingCount: number;
@@ -154,6 +154,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           rangeDownload: task.rangeDownload,
           m3u8Content: task.m3u8Content,
           createdAt: task.createdAt || Date.now(),
+          segmentLogs: task.segmentLogs,
         }));
 
       await downloadDB.saveActiveTasks(tasksToSave);
@@ -255,6 +256,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
                 task.errorNum = savedTask.errorNum;
                 task.downloadMode = savedTask.downloadMode;
                 task.rangeDownload = savedTask.rangeDownload;
+                task.segmentLogs = savedTask.segmentLogs || [];
 
                 if (dirHandle) {
                   task.filesystemDirHandle = dirHandle;
@@ -509,8 +511,8 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
     startNextPendingTask(downloader);
   }, [downloader, startNextPendingTask]);
 
-  const cancelTask = useCallback((taskId: string) => {
-    downloader.cancelTask(taskId);
+  const cancelTask = useCallback(async (taskId: string) => {
+    await downloader.cancelTask(taskId);
     setTasks(downloader.getAllTasks());
     // 保存任务状态到 IndexedDB（删除被取消的任务）
     saveTasks(downloader.getAllTasks());
